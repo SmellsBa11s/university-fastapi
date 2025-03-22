@@ -1,1 +1,1 @@
-from src.crud.user import UserDAO
+from src.crud.users import UserDAO

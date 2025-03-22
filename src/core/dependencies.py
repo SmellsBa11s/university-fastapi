@@ -2,7 +2,7 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi import Cookie
 
-from src.crud.user import UserDAO
+from src.crud.users import UserDAO
 from src.settings import settings
 
 
@@ -22,7 +22,7 @@ async def get_current_user(
     if username is None:
         raise HTTPException(status_code=401, detail="Неверный токен")
 
-    user = db_user.find_one_or_none(username=username)
-    if user is None:
-        raise HTTPException(status_code=401, detail="Пользователь не найден")
+    user = await db_user.find_one(username=username)
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Пользователь деактивирован")
     return user

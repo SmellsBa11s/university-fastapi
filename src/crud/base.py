@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,6 +50,26 @@ class BaseDAO:
         await self.session.commit()
         return result.scalar_one()
 
+    async def find_one(self, **filter_by):
+        """Ищет одну запись по заданным фильтрам.
+
+        Аргументы:
+            **filter_by: Аргументы для условия WHERE
+                (пример: username="john")
+
+        Возвращает:
+            model Найденный объект модели
+        """
+        query = select(self.model).filter_by(**filter_by)
+        res = await self.session.execute(query)
+        result = res.scalar_one_or_none()
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail=f"{self.model.__name__} with filter {filter_by} not found",
+            )
+        return result
+
     async def find_one_or_none(self, **filter_by):
         """Ищет одну запись по заданным фильтрам.
 
@@ -58,11 +78,11 @@ class BaseDAO:
                 (пример: username="john")
 
         Возвращает:
-            model | None: Найденный объект модели или None
+            model Найденный объект модели или None если не найдена(для частных случаев)
         """
         query = select(self.model).filter_by(**filter_by)
-        result = await self.session.execute(query)
-        return result.scalar_one_or_none()
+        res = await self.session.execute(query)
+        return res.scalar_one_or_none()
 
     async def find_all(self, **filter_by):
         """Ищет все записи по заданным фильтрам.
@@ -91,7 +111,10 @@ class BaseDAO:
         query = select(self.model).filter_by(id=model_id)
         result = await self.session.execute(query)
         if not result.scalar_one_or_none():
-            return None
+            raise HTTPException(
+                status_code=404,
+                detail=f"{self.model.__name__} with id {model_id} not found",
+            )
         stmt = await delete(self.model).where(self.model.id == model_id)
         await self.session.execute(stmt)
         await self.session.commit()
@@ -112,10 +135,11 @@ class BaseDAO:
         """
         query = select(self.model).filter_by(id=model_id)
         result = await self.session.execute(query)
-        instance = result.scalar_one_or_none()
-
-        if not instance:
-            return None
+        if not result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=404,
+                detail=f"{self.model.__name__} with id {model_id} not found",
+            )
 
         stmt = (
             update(self.model)

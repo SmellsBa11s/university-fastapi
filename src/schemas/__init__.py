@@ -1,1 +1,2 @@
-from src.schemas.user import *
+from src.schemas.auth import *
+from src.schemas.users import *

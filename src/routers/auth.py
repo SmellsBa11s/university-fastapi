@@ -25,7 +25,7 @@ async def register_user(
         last_name=user.last_name,
         username=user.username,
         password=user.password,
-        user_role=user.role,
+        user_role=user.user_role,
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -38,7 +38,7 @@ async def login(
     response: Response,
     db_user: UserDAO = Depends(),
 ) -> AuthResponse:
-    user = await db_user.find_one_or_none(username=username)
+    user = await db_user.find_one(username=username)
 
     if not user or not pwd_context.verify(password, user.password):
         raise HTTPException(status_code=401, detail="Некорректный email или пароль")
@@ -80,7 +80,7 @@ async def refresh_token_api(
         username = payload.get("sub")
         if not username:
             raise HTTPException(status_code=401, detail="Invalid token payload")
-        user = await db_user.find_one_or_none(username=username)
+        user = await db_user.find_one(username=username)
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 

@@ -14,7 +14,7 @@ class User(Base):
     last_name: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
-    role: Mapped[UserRoleEnum] = mapped_column(default=UserRoleEnum.ADMIN)
+    user_role: Mapped[UserRoleEnum] = mapped_column(default=UserRoleEnum.ADMIN)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow
