@@ -33,3 +33,15 @@ async def get_current_user(
 async def get_admin_user(user: User = Depends(get_current_user)):
     if user.user_role != UserRoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="Only admin can do this")
+
+    return user
+
+
+async def get_admin_or_instructor_user(user: User = Depends(get_current_user)):
+    if (user.user_role != UserRoleEnum.ADMIN) and (
+        user.user_role != UserRoleEnum.INSTRUCTOR
+    ):
+        raise HTTPException(
+            status_code=403, detail="Only admin or instructor can do this"
+        )
+    return user
