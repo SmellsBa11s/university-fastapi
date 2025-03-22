@@ -20,6 +20,7 @@ class InstructorService:
         self._course_dao = courses_dao
 
     async def process_information(self, request: Instructor) -> InstructorInfo:
+        """Преобразует объект Instructor в DTO для ответа API."""
         return InstructorInfo(
             id=request.id,
             user_id=request.user_id,
@@ -31,16 +32,23 @@ class InstructorService:
     async def add_instructor(
         self, instructor_data: CreateInstructorRequest
     ) -> InstructorInfo:
+        """Создает нового преподавателя в системе."""
         instructor = await self._instructor_dao.add(instructor_data)
         return await self.process_information(instructor)
 
     async def get_instructor(self, instructor_id) -> InstructorInfo:
+        """Возвращает информацию о преподавателе по его ID."""
         instructor = await self._instructor_dao.find_one(id=instructor_id)
         return await self.process_information(instructor)
 
     async def get_instructors(
         self, department: str = None, course_id: int = None
     ) -> List[InstructorInfo]:
+        """
+        Возвращает список преподавателей с фильтрацией:
+        - по кафедре/отделу (department)
+        - по курсу, который ведет преподаватель (course_id)
+        """
         instructor_filters = {}
 
         if department is not None:
