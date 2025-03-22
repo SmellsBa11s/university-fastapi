@@ -1,6 +1,7 @@
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import insert, delete, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -42,13 +43,17 @@ class BaseDAO:
             ValueError: При пустых или невалидных данных
             SQLAlchemyError: При ошибках работы с базой данных
         """
-        if isinstance(data, BaseModel):
-            data = data.model_dump()
+        try:
+            if isinstance(data, BaseModel):
+                data = data.model_dump()
 
-        query = insert(self.model).values(**data).returning(self.model)
-        result = await self.session.execute(query)
-        await self.session.commit()
-        return result.scalar_one()
+            query = insert(self.model).values(**data).returning(self.model)
+            result = await self.session.execute(query)
+            await self.session.commit()
+            return result.scalar_one()
+        except Exception as e:
+            await self.session.rollback()
+            raise HTTPException(status_code=409, detail=f"Ошибка базы данных: {str(e)}")
 
     async def find_one(self, **filter_by):
         """Ищет одну запись по заданным фильтрам.
@@ -133,21 +138,26 @@ class BaseDAO:
             model | None: Обновленный объект модели
                 или None если запись не найдена
         """
-        query = select(self.model).filter_by(id=model_id)
-        result = await self.session.execute(query)
-        if not result.scalar_one_or_none():
-            raise HTTPException(
-                status_code=404,
-                detail=f"{self.model.__name__} with id {model_id} not found",
+        try:
+            query = select(self.model).filter_by(id=model_id)
+            result = await self.session.execute(query)
+            if not result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"{self.model.__name__} with id {model_id} not found",
+                )
+
+            stmt = (
+                update(self.model)
+                .where(self.model.id == model_id)
+                .values(**update_data)
+                .returning(self.model)
             )
+            result = await self.session.execute(stmt)
+            await self.session.commit()
 
-        stmt = (
-            update(self.model)
-            .where(self.model.id == model_id)
-            .values(**update_data)
-            .returning(self.model)
-        )
-        result = await self.session.execute(stmt)
-        await self.session.commit()
+            return result.scalars().all()
 
-        return result.scalars().all()
+        except Exception as e:
+            await self.session.rollback()
+            raise HTTPException(status_code=409, detail=f"Ошибка базы данных: {str(e)}")
