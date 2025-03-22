@@ -1,39 +1,23 @@
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from src.core.db.database import get_async_db
+from src.crud.base import BaseDAO
 from src.models import User
-from src.schemas import CreateUserRequest
-from src.service.auth import pwd_context
 
 
-async def get_user_by_username(
-    username: str, db: AsyncSession = Depends(get_async_db)
-) -> User:
-    result = await db.execute(select(User).where(User.username == username))
-    user = result.scalars().first()
-    return user
+class UserDAO(BaseDAO):
+    """Data Access Object (DAO) для управления пользователями в базе данных.
 
+    Наследует базовые CRUD-операции из BaseDAO и добавляет
+    специализированные методы для работы с сущностью User.
 
-async def get_user_by_id(
-    user_id: int, db: AsyncSession = Depends(get_async_db)
-) -> User:
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalars().first()
-    return user
+    Примеры использования:
+        user_dao = UserDAO()
+        new_user = await user_dao.add({
+                "username": "john_doe",
+                "password": "secret"
+            })
+        found_user = await user_dao.find_one_or_none(username="john_doe")
 
+    Атрибуты:
+        model (User): SQLAlchemy модель пользователя, используемая для операций
+    """
 
-async def create_user(
-    user: CreateUserRequest, db: AsyncSession = Depends(get_async_db)
-) -> User:
-    hashed_password = pwd_context.hash(user.password)
-    db_user = User(
-        first_name=user.first_name,
-        last_name=user.last_name,
-        username=user.username,
-        password=hashed_password,
-    )
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+    model = User

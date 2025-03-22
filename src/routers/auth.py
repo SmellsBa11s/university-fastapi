@@ -1,9 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.db.database import get_async_db
-from src.crud import get_user_by_username, create_user
+from src.crud import UserDAO
 from src.schemas import AuthResponse, CreateUserRequest, CreateUserResponse
 from src.service.auth import AuthService, pwd_context
 from src.settings import settings
@@ -13,20 +11,21 @@ router = APIRouter()
 
 @router.post("/register", summary="Register new user")
 async def register_user(
-    user: CreateUserRequest, db: AsyncSession = Depends(get_async_db)
+    user: CreateUserRequest, db_user: UserDAO = Depends()
 ) -> CreateUserResponse:
-    existing_user = await get_user_by_username(username=user.username, db=db)
+    existing_user = await db_user.find_one_or_none(username=user.username)
 
     if existing_user:
         raise HTTPException(status_code=400, detail="User уже зарегистрирован")
-
-    user = await create_user(user=user, db=db)
+    user.password = pwd_context.hash(user.password)
+    user = await db_user.add(user)
 
     return CreateUserResponse(
         first_name=user.first_name,
         last_name=user.last_name,
         username=user.username,
         password=user.password,
+        user_role=user.role,
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -37,9 +36,9 @@ async def login(
     username: str,
     password: str,
     response: Response,
-    db: AsyncSession = Depends(get_async_db),
+    db_user: UserDAO = Depends(),
 ) -> AuthResponse:
-    user = await get_user_by_username(username=username, db=db)
+    user = await db_user.find_one_or_none(username=username)
 
     if not user or not pwd_context.verify(password, user.password):
         raise HTTPException(status_code=401, detail="Некорректный email или пароль")
@@ -71,19 +70,17 @@ async def login(
 async def refresh_token_api(
     response: Response,
     refresh_token: Optional[str] = Cookie(default=None),
-    db: AsyncSession = Depends(get_async_db),
+    db_user: UserDAO = Depends(),
 ) -> AuthResponse:
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Refresh token is missing")
 
     try:
-        # Получаем payload из токена
         payload = AuthService.get_token_payload(refresh_token, is_refresh=True)
         username = payload.get("sub")
         if not username:
             raise HTTPException(status_code=401, detail="Invalid token payload")
-
-        user = await get_user_by_username(username=username, db=db)
+        user = await db_user.find_one_or_none(username=username)
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 

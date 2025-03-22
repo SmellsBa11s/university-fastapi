@@ -3,6 +3,8 @@ from sqlalchemy.orm import mapped_column, Mapped
 from src.models.base import Base
 from datetime import datetime
 
+from src.models.enum import UserRoleEnum
+
 
 class User(Base):
     __tablename__ = "user"
@@ -11,7 +13,8 @@ class User(Base):
     first_name: Mapped[str] = mapped_column()
     last_name: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
-    password: Mapped[str] = mapped_column()
+    password: Mapped[str] = mapped_column(nullable=False)
+    role: Mapped[UserRoleEnum] = mapped_column(default=UserRoleEnum.ADMIN)
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow

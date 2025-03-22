@@ -11,6 +11,12 @@ class SemesterEnum(Enum):
     SPRING = "spring"
 
 
+class UserRoleEnum(Enum):
+    ADMIN = "admin"
+    STUDENT = "student"
+    INSTRUCTOR = "instructor"
+
+
 class StatusEnum(Enum):
     ACTIVE = "active"
     COMPLETED = "completed"

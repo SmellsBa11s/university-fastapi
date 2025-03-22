@@ -1,15 +1,13 @@
-from fastapi import Depends, HTTPException
 import jwt
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, HTTPException
 from fastapi import Cookie
 
-from src.core.db.database import get_async_db
-from src.crud.user import get_user_by_username
+from src.crud.user import UserDAO
 from src.settings import settings
 
 
 async def get_current_user(
-    access_token: str = Cookie(None), db: AsyncSession = Depends(get_async_db)
+    access_token: str = Cookie(None), db_user: UserDAO = Depends()
 ):
     if not access_token:
         raise HTTPException(status_code=401, detail="Токен отсутствует")
@@ -24,7 +22,7 @@ async def get_current_user(
     if username is None:
         raise HTTPException(status_code=401, detail="Неверный токен")
 
-    user = await get_user_by_username(username=username, db=db)
+    user = db_user.find_one_or_none(username=username)
     if user is None:
         raise HTTPException(status_code=401, detail="Пользователь не найден")
     return user
