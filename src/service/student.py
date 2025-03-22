@@ -1,9 +1,7 @@
 from typing import List
 from fastapi import Depends
 
-from src.crud import StudentDAO, FacultyDAO, GroupDAO
-from src.crud.courses import CourseDAO
-from src.crud.enrollments import EnrollmentDAO
+from src.crud import StudentDAO, FacultyDAO, GroupDAO, CourseDAO, EnrollmentDAO
 from src.models.enum import StatusEnum
 from src.schemas import StudentCreateRequest, StudentInfo, StudentUpdateRequest
 

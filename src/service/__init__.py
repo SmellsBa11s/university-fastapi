@@ -1,1 +1,2 @@
-from src.service.student_service import StudentService
+from src.service.student import StudentService
+from src.service.instructor import InstructorService
