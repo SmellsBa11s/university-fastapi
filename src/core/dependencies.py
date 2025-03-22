@@ -3,6 +3,8 @@ from fastapi import Depends, HTTPException
 from fastapi import Cookie
 
 from src.crud.users import UserDAO
+from src.models import User
+from src.models.enum import UserRoleEnum
 from src.settings import settings
 
 
@@ -26,3 +28,8 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Пользователь деактивирован")
     return user
+
+
+async def get_admin_user(user: User = Depends(get_current_user)):
+    if user.user_role != UserRoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admin can do this")

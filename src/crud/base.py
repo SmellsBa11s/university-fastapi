@@ -115,7 +115,7 @@ class BaseDAO:
                 status_code=404,
                 detail=f"{self.model.__name__} with id {model_id} not found",
             )
-        stmt = await delete(self.model).where(self.model.id == model_id)
+        stmt = delete(self.model).where(self.model.id == model_id)
         await self.session.execute(stmt)
         await self.session.commit()
 

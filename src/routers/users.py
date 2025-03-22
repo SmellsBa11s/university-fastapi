@@ -1,6 +1,4 @@
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException
 
 from src.core.dependencies import get_current_user
 from src.crud import UserDAO
@@ -15,8 +13,8 @@ router = APIRouter()
 async def get_all(
     db_user: UserDAO = Depends(UserDAO), user: User = Depends(get_current_user)
 ) -> GetAllUsersResponse:
-    if user.username != UserRoleEnum.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admin cat get all users")
+    if user.user_role != UserRoleEnum.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admin can get all users")
     users = await db_user.find_all(is_active=True)
 
     users_response = [
