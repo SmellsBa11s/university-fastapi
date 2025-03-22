@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from src.core.db.database import get_async_db
 from src.models import User
-from src.schemas import UserBase
+from src.schemas import CreateUserRequest
 from src.service.auth import pwd_context
 
 
@@ -23,9 +23,13 @@ async def get_user_by_id(
     return user
 
 
-async def create_user(user: UserBase, db: AsyncSession = Depends(get_async_db)) -> User:
+async def create_user(
+    user: CreateUserRequest, db: AsyncSession = Depends(get_async_db)
+) -> User:
     hashed_password = pwd_context.hash(user.password)
     db_user = User(
+        first_name=user.first_name,
+        last_name=user.last_name,
         username=user.username,
         password=hashed_password,
     )

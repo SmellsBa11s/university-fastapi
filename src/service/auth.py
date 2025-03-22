@@ -1,11 +1,8 @@
 from datetime import datetime, timedelta
 
-from jose import JWTError
+from fastapi import HTTPException
 from passlib.context import CryptContext
 import jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.crud import get_user_by_username
 from src.models import User
 from src.settings import settings
 
@@ -48,3 +45,33 @@ class AuthService:
                 expires_delta=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES),
             ),
         }
+
+    @staticmethod
+    def verify_refresh_token(token: str) -> dict:
+        try:
+            payload = jwt.decode(
+                token, settings.REFRESH_SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            return payload
+        except:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    @staticmethod
+    def verify_access_token(token: str) -> dict:
+        try:
+            payload = jwt.decode(
+                token, settings.ACCESS_SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            return payload
+        except:
+            raise HTTPException(status_code=401, detail="Invalid access token")
+
+    @classmethod
+    def get_token_payload(cls, token: str, is_refresh: bool = False) -> dict:
+        token = token.replace("Bearer ", "")
+        try:
+            if is_refresh:
+                return cls.verify_refresh_token(token)
+            return cls.verify_access_token(token)
+        except HTTPException:
+            raise
