@@ -7,30 +7,30 @@ from src.schemas import StudentCreateRequest, StudentInfo, StudentUpdateRequest
 
 
 class StudentService:
-    """Сервис для управления операциями со студентами с использованием DAO слоя.
+    """Service for managing student operations using the DAO layer.
 
-    Обеспечивает полный цикл работы с данными студентов: создание, обновление,
-    получение информации и комплексную фильтрацию с учетом связанных сущностей.
+    Provides a complete cycle of working with student data: creation, updating,
+    retrieving information and complex filtering with related entities.
     """
 
     def __init__(
-            self,
-            user_dao: UserDAO = Depends(),
-            student_dao: StudentDAO = Depends(),
-            faculty_dao: FacultyDAO = Depends(),
-            group_dao: GroupDAO = Depends(),
-            enrollment_dao: EnrollmentDAO = Depends(),
-            courses_dao: CourseDAO = Depends(),
+        self,
+        user_dao: UserDAO = Depends(),
+        student_dao: StudentDAO = Depends(),
+        faculty_dao: FacultyDAO = Depends(),
+        group_dao: GroupDAO = Depends(),
+        enrollment_dao: EnrollmentDAO = Depends(),
+        courses_dao: CourseDAO = Depends(),
     ):
-        """Инициализирует DAO для работы с сущностями системы.
+        """Initializes DAO for working with system entities.
 
         Args:
-            user_dao (UserDAO): DAO для работы с пользователями
-            student_dao (StudentDAO): DAO для работы со студентами
-            faculty_dao (FacultyDAO): DAO для работы с факультетами
-            group_dao (GroupDAO): DAO для работы с группами
-            enrollment_dao (EnrollmentDAO): DAO для работы с записями на курсы
-            courses_dao (CourseDAO): DAO для работы с курсами
+            user_dao (UserDAO): DAO for working with users
+            student_dao (StudentDAO): DAO for working with students
+            faculty_dao (FacultyDAO): DAO for working with faculties
+            group_dao (GroupDAO): DAO for working with groups
+            enrollment_dao (EnrollmentDAO): DAO for working with course enrollments
+            courses_dao (CourseDAO): DAO for working with courses
         """
         self._user_dao = user_dao
         self._student_dao = student_dao
@@ -40,16 +40,16 @@ class StudentService:
         self._course_dao = courses_dao
 
     async def get_student_info(self, student_id: int) -> StudentInfo:
-        """Получает расширенную информацию о студенте по его идентификатору.
+        """Gets extended information about a student by their ID.
 
         Args:
-            student_id (int): Уникальный идентификатор студента
+            student_id (int): Unique student identifier
 
         Returns:
-            StudentInfo: DTO с полной информацией о студенте включая группу и факультет
+            StudentInfo: DTO with complete student information including group and faculty
 
         Raises:
-            HTTPException: 404 если студент или связанные сущности не найдены
+            HTTPException: 404 if student or related entities are not found
         """
         student_data = await self._student_dao.find_one(id=student_id)
         group = await self._group_dao.find_one(id=student_data.group_id)
@@ -65,18 +65,18 @@ class StudentService:
         )
 
     async def add_student(self, student_data: StudentCreateRequest) -> StudentInfo:
-        """Создает нового студента и возвращает его расширенные данные.
+        """Creates a new student and returns their extended data.
 
         Args:
-            student_data (StudentCreateRequest): DTO с данными для создания студента
+            student_data (StudentCreateRequest): DTO with data for student creation
 
         Returns:
-            StudentInfo: Созданный студент с полной информацией
+            StudentInfo: Created student with complete information
 
         Raises:
             HTTPException:
-                400 - При ошибках валидации данных
-                404 - Если связанная группа или факультет не существуют
+                400 - On data validation errors
+                404 - If related group or faculty does not exist
         """
         student = await self._student_dao.add(student_data)
         await self._user_dao.update(
@@ -85,31 +85,31 @@ class StudentService:
         return await self.get_student_info(student.id)
 
     async def get_students(
-            self,
-            group_id: int = None,
-            enrollment_year: int = None,
-            faculty_id: int = None,
-            course_id: int = None,
-            enrollment_status: StatusEnum = None,
+        self,
+        group_id: int = None,
+        enrollment_year: int = None,
+        faculty_id: int = None,
+        course_id: int = None,
+        enrollment_status: StatusEnum = None,
     ) -> List[StudentInfo]:
-        """Возвращает отфильтрованный список студентов с дополнительной информацией.
+        """Returns a filtered list of students with additional information.
 
-        Поддерживает комбинированную фильтрацию по:
-        - Группе
-        - Году поступления
-        - Факультету
-        - Курсу (через записи на курсы)
-        - Статусу записи на курс
+        Supports combined filtering by:
+        - Group
+        - Enrollment year
+        - Faculty
+        - Course (through course enrollments)
+        - Course enrollment status
 
         Args:
-            group_id (int, optional): Фильтр по ID группы
-            enrollment_year (int, optional): Фильтр по году поступления
-            faculty_id (int, optional): Фильтр по ID факультета
-            course_id (int, optional): Фильтр по ID курса
-            enrollment_status (StatusEnum, optional): Фильтр по статусу записи
+            group_id (int, optional): Filter by group ID
+            enrollment_year (int, optional): Filter by enrollment year
+            faculty_id (int, optional): Filter by faculty ID
+            course_id (int, optional): Filter by course ID
+            enrollment_status (StatusEnum, optional): Filter by enrollment status
 
         Returns:
-            List[StudentInfo]: Список студентов, соответствующих фильтрам
+            List[StudentInfo]: List of students matching the filters
         """
         student_filters = {}
 
@@ -138,19 +138,19 @@ class StudentService:
         return [await self.get_student_info(student.id) for student in students]
 
     async def update_student(self, student_id: int, update_data: StudentUpdateRequest):
-        """Обновляет данные студента и возвращает актуальную информацию.
+        """Updates student data and returns current information.
 
         Args:
-            student_id (int): ID обновляемого студента
-            update_data (StudentUpdateRequest): DTO с обновляемыми полями
+            student_id (int): ID of the student to update
+            update_data (StudentUpdateRequest): DTO with fields to update
 
         Returns:
-            StudentInfo: Обновленные данные студента
+            StudentInfo: Updated student data
 
         Raises:
             HTTPException:
-                404 - Если студент не найден
-                400 - При ошибках валидации данных
+                404 - If student is not found
+                400 - On data validation errors
         """
         update_data = update_data.dict(exclude_none=True)
 

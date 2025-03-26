@@ -7,28 +7,28 @@ from src.schemas import CreateCourseRequest, CourseInfo, UpdateCourseRequest
 
 
 class CourseService:
-    """Сервис для управления операциями с курсами в системе.
+    """Service for managing course operations in the system.
 
-    Обеспечивает взаимодействие с DAO слоем для выполнения CRUD операций с курсами,
-    включая проверку прав доступа пользователей.
+    Provides interaction with the DAO layer for performing CRUD operations with courses,
+    including user access rights verification.
     """
 
     def __init__(self, courses_dao: CourseDAO = Depends()):
-        """Инициализирует сервис с необходимыми DAO объектами.
+        """Initializes the service with necessary DAO objects.
 
         Args:
-            courses_dao (CourseDAO): DAO для работы с курсами, внедряется через зависимость
+            courses_dao (CourseDAO): DAO for working with courses, injected through dependency
         """
         self._course_dao = courses_dao
 
     async def process_information(self, request: Course) -> CourseInfo:
-        """Преобразует объект Course в схему CourseInfo для ответа API.
+        """Converts a Course object to a CourseInfo schema for API response.
 
         Args:
-            request (Course): Объект курса из базы данных
+            request (Course): Course object from the database
 
         Returns:
-            CourseInfo: Схема с данными курса для возврата в API
+            CourseInfo: Schema with course data for API response
         """
         return CourseInfo(
             id=request.id,
@@ -42,44 +42,44 @@ class CourseService:
         )
 
     async def create_course(self, course_data: CreateCourseRequest) -> CourseInfo:
-        """Создает новый курс в системе.
+        """Creates a new course in the system.
 
         Args:
-            course_data (CreateCourseRequest): Данные для создания курса
+            course_data (CreateCourseRequest): Data for creating a course
 
         Returns:
-            CourseInfo: Созданный курс в формате схемы для ответа
+            CourseInfo: Created course in response schema format
         """
         course = await self._course_dao.add(course_data)
         return await self.process_information(course)
 
     async def get_course(self, course_id: int) -> CourseInfo:
-        """Получает информацию о курсе по его идентификатору.
+        """Gets course information by its ID.
 
         Args:
-            course_id (int): Уникальный идентификатор курса
+            course_id (int): Unique course identifier
 
         Returns:
-            CourseInfo: Данные курса в формате схемы для ответа
+            CourseInfo: Course data in response schema format
 
         Raises:
-            HTTPException: Если курс не найден (404 ошибка)
+            HTTPException: If course is not found (404 error)
         """
         course = await self._course_dao.find_one(id=course_id)
         return await self.process_information(course)
 
     async def delete_course(self, course_id: int, user: User) -> bool:
-        """Удаляет курс из системы после проверки прав доступа.
+        """Deletes a course from the system after access rights verification.
 
         Args:
-            course_id (int): Уникальный идентификатор курса для удаления
-            user (User): Авторизованный пользователь, инициирующий удаление
+            course_id (int): Unique identifier of the course to delete
+            user (User): Authorized user initiating the deletion
 
         Returns:
-            bool: True если удаление прошло успешно
+            bool: True if deletion was successful
 
         Raises:
-            HTTPException: 403 если нет прав доступа, 404 если курс не найден
+            HTTPException: 403 if no access rights, 404 if course is not found
         """
         course = await self._course_dao.find_one(id=course_id)
         if (user.id != course.instructor_id) and (user.user_role != UserRoleEnum.ADMIN):
@@ -92,18 +92,18 @@ class CourseService:
     async def update_course(
         self, course_id: int, user: User, updated_data: UpdateCourseRequest
     ) -> CourseInfo:
-        """Обновляет данные существующего курса.
+        """Updates data of an existing course.
 
         Args:
-            course_id (int): Уникальный идентификатор обновляемого курса
-            user (User): Авторизованный пользователь, инициирующий обновление
-            updated_data (UpdateCourseRequest): Данные для обновления курса
+            course_id (int): Unique identifier of the course to update
+            user (User): Authorized user initiating the update
+            updated_data (UpdateCourseRequest): Data to update the course
 
         Returns:
-            CourseInfo: Обновленные данные курса в формате схемы
+            CourseInfo: Updated course data in schema format
 
         Raises:
-            HTTPException: 403 если нет прав доступа, 404 если курс не найден
+            HTTPException: 403 if no access rights, 404 if course is not found
         """
         update_data = updated_data.dict(exclude_none=True)
 
@@ -122,15 +122,15 @@ class CourseService:
     async def get_courses(
         self, semester: SemesterEnum = None, year: int = None, instructor_id: int = None
     ) -> List[CourseInfo]:
-        """Возвращает отфильтрованный список курсов.
+        """Returns a filtered list of courses.
 
         Args:
-            semester (SemesterEnum, optional): Фильтр по семестру
-            year (int, optional): Фильтр по году проведения
-            instructor_id (int, optional): Фильтр по ID преподавателя
+            semester (SemesterEnum, optional): Filter by semester
+            year (int, optional): Filter by year
+            instructor_id (int, optional): Filter by instructor ID
 
         Returns:
-            List[CourseInfo]: Список курсов, соответствующих фильтрам
+            List[CourseInfo]: List of courses matching the filters
         """
         course_filters = {}
 

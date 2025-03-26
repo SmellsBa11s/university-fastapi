@@ -3,17 +3,25 @@ from src.models import Enrollment
 
 
 class EnrollmentDAO(BaseDAO):
-    """Data Access Object (DAO) для управления пользователями в базе данных.
+    """Data Access Object (DAO) for managing enrollments in the database.
 
-    Наследует базовые CRUD-операции из BaseDAO и добавляет
-    специализированные методы для работы с сущностью Enrollment.
+    Inherits basic CRUD operations from BaseDAO and adds
+    specialized methods for working with the Enrollment entity.
 
-    Примеры использования:
+    Usage examples:
         enrollment_dao = EnrollmentDAO()
-        new_enrollment = await enrollment_dao.add(Enrollment)
+        new_enrollment = await enrollment_dao.add({
+                "student_id": 1,
+                "course_id": 1,
+                "semester": "Spring",
+                "grade": None
+            })
+        found_enrollment = await enrollment_dao.find_one_or_none(
+            student_id=1, course_id=1
+        )
 
-    Атрибуты:
-        model (Enrollment): SQLAlchemy модель групп, используемая для операций
+    Attributes:
+        model (Enrollment): SQLAlchemy Enrollment model used for operations
     """
 
     model = Enrollment

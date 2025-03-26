@@ -9,8 +9,7 @@ from src.settings import settings
 
 
 async def get_current_user(
-    access_token: str = Cookie(None),
-    db_user: UserDAO = Depends()
+    access_token: str = Cookie(None), db_user: UserDAO = Depends()
 ) -> User:
     """Получает аутентифицированного пользователя на основе JWT токена.
 

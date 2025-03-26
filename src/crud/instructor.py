@@ -3,17 +3,22 @@ from src.models import Instructor
 
 
 class InstructorDAO(BaseDAO):
-    """Data Access Object (DAO) для управления пользователями в базе данных.
+    """Data Access Object (DAO) for managing instructors in the database.
 
-    Наследует базовые CRUD-операции из BaseDAO и добавляет
-    специализированные методы для работы с сущностью Instructor.
+    Inherits basic CRUD operations from BaseDAO and adds
+    specialized methods for working with the Instructor entity.
 
-    Примеры использования:
+    Usage examples:
         instructor_dao = InstructorDAO()
-        new_instructor = await instructor_dao.add(Instructor)
+        new_instructor = await instructor_dao.add({
+                "user_id": 1,
+                "department": "Computer Science",
+                "position": "Associate Professor"
+            })
+        found_instructor = await instructor_dao.find_one_or_none(user_id=1)
 
-    Атрибуты:
-        model (Instructor): SQLAlchemy модель групп, используемая для операций
+    Attributes:
+        model (Instructor): SQLAlchemy Instructor model used for operations
     """
 
     model = Instructor
