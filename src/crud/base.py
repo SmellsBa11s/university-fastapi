@@ -1,7 +1,6 @@
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import insert, delete, update
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
