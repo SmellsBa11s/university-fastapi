@@ -13,10 +13,22 @@ router = APIRouter()
 async def register_user(
     user: CreateUserRequest, db_user: UserDAO = Depends()
 ) -> CreateUserResponse:
+    """Registers a new user in the system.
+
+    Args:
+        user (CreateUserRequest): Data for creating a user
+        db_user (UserDAO): DAO for working with users
+
+    Returns:
+        CreateUserResponse: Created user
+
+    Raises:
+        HTTPException: 400 if user already exists
+    """
     existing_user = await db_user.find_one_or_none(username=user.username)
 
     if existing_user:
-        raise HTTPException(status_code=400, detail="User уже зарегистрирован")
+        raise HTTPException(status_code=400, detail="User is already registered")
     user.password = pwd_context.hash(user.password)
     user = await db_user.add(user)
 
@@ -31,17 +43,31 @@ async def register_user(
     )
 
 
-@router.post("/login", summary="Login in account")
+@router.post("/login", summary="Login to account")
 async def login(
     username: str,
     password: str,
     response: Response,
     db_user: UserDAO = Depends(),
 ) -> AuthResponse:
+    """Authenticates a user and creates access tokens.
+
+    Args:
+        username (str): Username
+        password (str): User password
+        response (Response): Response object for setting cookies
+        db_user (UserDAO): DAO for working with users
+
+    Returns:
+        AuthResponse: Access and refresh tokens
+
+    Raises:
+        HTTPException: 401 for invalid credentials
+    """
     user = await db_user.find_one(username=username)
 
     if not user or not pwd_context.verify(password, user.password):
-        raise HTTPException(status_code=401, detail="Некорректный email или пароль")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     tokens = AuthService.generate_tokens(user)
 
@@ -72,6 +98,19 @@ async def refresh_token_api(
     refresh_token: Optional[str] = Cookie(default=None),
     db_user: UserDAO = Depends(),
 ) -> AuthResponse:
+    """Refreshes access token using refresh token.
+
+    Args:
+        response (Response): Response object for setting cookies
+        refresh_token (Optional[str]): Refresh token from cookie
+        db_user (UserDAO): DAO for working with users
+
+    Returns:
+        AuthResponse: New access and refresh tokens
+
+    Raises:
+        HTTPException: 401 if refresh token is missing or invalid
+    """
     if not refresh_token:
         raise HTTPException(status_code=401, detail="Refresh token is missing")
 
@@ -112,6 +151,16 @@ async def refresh_token_api(
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 
-@router.post("/logout", summary="Logout into account")
+@router.post("/logout", summary="Logout from account")
 async def logout(response: Response) -> None:
-    response.delete_cookie(key="access")
+    """Logs out from the system and removes tokens.
+
+    Args:
+        response (Response): Response object for removing cookies
+    """
+    response.delete_cookie(
+        key="access_token", httponly=True, secure=True, samesite="lax"
+    )
+    response.delete_cookie(
+        key="refresh_token", httponly=True, secure=True, samesite="lax"
+    )

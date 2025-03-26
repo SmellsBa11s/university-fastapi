@@ -3,17 +3,21 @@ from src.models import Group
 
 
 class GroupDAO(BaseDAO):
-    """Data Access Object (DAO) для управления пользователями в базе данных.
+    """Data Access Object (DAO) for managing groups in the database.
 
-    Наследует базовые CRUD-операции из BaseDAO и добавляет
-    специализированные методы для работы с сущностью Group.
+    Inherits basic CRUD operations from BaseDAO and adds
+    specialized methods for working with the Group entity.
 
-    Примеры использования:
+    Usage examples:
         group_dao = GroupDAO()
-        new_group = await group_dao.add(group)
+        new_group = await group_dao.add({
+                "name": "Group A",
+                "faculty_id": 1
+            })
+        found_group = await group_dao.find_one_or_none(name="Group A")
 
-    Атрибуты:
-        model (Group): SQLAlchemy модель групп, используемая для операций
+    Attributes:
+        model (Group): SQLAlchemy Group model used for operations
     """
 
     model = Group

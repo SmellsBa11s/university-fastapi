@@ -42,7 +42,9 @@ class Student(Base):
 class Instructor(Base):
     __tablename__ = "instructor"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
     position: Mapped[str] = mapped_column(nullable=False)
     department: Mapped[str] = mapped_column(nullable=False)
     academic_degree: Mapped[str] = mapped_column(nullable=False)

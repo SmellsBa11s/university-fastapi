@@ -8,39 +8,39 @@ from src.core.db.database import get_async_db
 
 
 class BaseDAO:
-    """Абстрактный Data Access Object (DAO) с базовыми CRUD-операциями.
+    """Abstract Data Access Object (DAO) with basic CRUD operations.
 
-    Требует установки атрибута `model` в дочерних классах.
-    Автоматически управляет сессиями через внедрение зависимостей.
+    Requires setting the `model` attribute in child classes.
+    Automatically manages sessions through dependency injection.
 
-    Атрибуты:
-        model (DeclarativeBase): SQLAlchemy модель для операций
+    Attributes:
+        model (DeclarativeBase): SQLAlchemy model for operations
     """
 
     model = None
 
     def __init__(self, session: AsyncSession = Depends(get_async_db)):
-        """Инициализирует DAO сессией базы данных.
+        """Initializes DAO with a database session.
 
-        Аргументы:
-            session (AsyncSession): Асинхронная сессия SQLAlchemy,
-                внедряемая через FastAPI Depends
+        Args:
+            session (AsyncSession): Asynchronous SQLAlchemy session,
+                injected through FastAPI Depends
         """
         self.session = session
 
     async def add(self, data: dict | BaseModel):
-        """Создает новую запись в базе данных.
+        """Creates a new record in the database.
 
-        Аргументы:
-            data (dict | BaseModel): Словарь или Pydantic-модель
-                с данными для создания
+        Args:
+            data (dict | BaseModel): Dictionary or Pydantic model
+                with data for creation
 
-        Возвращает:
-            model: Созданный экземпляр модели
+        Returns:
+            model: Created model instance
 
-        Исключения:
-            ValueError: При пустых или невалидных данных
-            SQLAlchemyError: При ошибках работы с базой данных
+        Raises:
+            ValueError: For empty or invalid data
+            SQLAlchemyError: For database operation errors
         """
         try:
             if isinstance(data, BaseModel):
@@ -52,17 +52,17 @@ class BaseDAO:
             return result.scalar_one()
         except Exception as e:
             await self.session.rollback()
-            raise HTTPException(status_code=409, detail=f"Ошибка базы данных: {str(e)}")
+            raise HTTPException(status_code=409, detail=f"Database error: {str(e)}")
 
     async def find_one(self, **filter_by):
-        """Ищет одну запись по заданным фильтрам.
+        """Finds one record by given filters.
 
-        Аргументы:
-            **filter_by: Аргументы для условия WHERE
-                (пример: username="john")
+        Args:
+            **filter_by: Arguments for WHERE condition
+                (example: username="john")
 
-        Возвращает:
-            model Найденный объект модели
+        Returns:
+            model: Found model object
         """
         query = select(self.model).filter_by(**filter_by)
         res = await self.session.execute(query)
@@ -75,42 +75,42 @@ class BaseDAO:
         return result
 
     async def find_one_or_none(self, **filter_by):
-        """Ищет одну запись по заданным фильтрам.
+        """Finds one record by given filters.
 
-        Аргументы:
-            **filter_by: Аргументы для условия WHERE
-                (пример: username="john")
+        Args:
+            **filter_by: Arguments for WHERE condition
+                (example: username="john")
 
-        Возвращает:
-            model Найденный объект модели или None если не найдена(для частных случаев)
+        Returns:
+            model: Found model object or None if not found (for special cases)
         """
         query = select(self.model).filter_by(**filter_by)
         res = await self.session.execute(query)
         return res.scalar_one_or_none()
 
     async def find_all(self, **filter_by):
-        """Ищет все записи по заданным фильтрам.
+        """Finds all records by given filters.
 
-        Аргументы:
-            **filter_by: Аргументы для условия WHERE
-                (пример: is_active=True)
+        Args:
+            **filter_by: Arguments for WHERE condition
+                (example: is_active=True)
 
-        Возвращает:
-            list[model]: Список найденных объектов модели
+        Returns:
+            list[model]: List of found model objects
         """
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return result.scalars().all()
 
     async def delete(self, model_id: int):
-        """Удаляет запись по идентификатору.
+        """Deletes a record by ID.
 
-        Аргументы:
-            model_id (int): ID записи для удаления
+        Args:
+            model_id (int): Record ID to delete
 
-        Возвращает:
-            bool | None: True при успешном удалении,
-                None если запись не найдена
+        Returns:
+            bool | None: True if deletion was successful,
+                None if record was not found
         """
         query = select(self.model).filter_by(id=model_id)
         result = await self.session.execute(query)
@@ -126,16 +126,16 @@ class BaseDAO:
         return True
 
     async def update(self, model_id: int, **update_data):
-        """Обновляет запись по идентификатору.
+        """Updates a record by ID.
 
-        Аргументы:
-            model_id (int): ID записи для обновления
-            **update_data: Данные для обновления
-                (пример: username="new_name")
+        Args:
+            model_id (int): Record ID to update
+            **update_data: Data to update
+                (example: username="new_name")
 
-        Возвращает:
-            model | None: Обновленный объект модели
-                или None если запись не найдена
+        Returns:
+            model | None: Updated model object
+                or None if record was not found
         """
         try:
             query = select(self.model).filter_by(id=model_id)
@@ -159,4 +159,4 @@ class BaseDAO:
 
         except Exception as e:
             await self.session.rollback()
-            raise HTTPException(status_code=409, detail=f"Ошибка базы данных: {str(e)}")
+            raise HTTPException(status_code=409, detail=f"Database error: {str(e)}")

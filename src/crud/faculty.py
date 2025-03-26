@@ -3,17 +3,22 @@ from src.models import Faculty
 
 
 class FacultyDAO(BaseDAO):
-    """Data Access Object (DAO) для управления пользователями в базе данных.
+    """Data Access Object (DAO) for managing faculties in the database.
 
-    Наследует базовые CRUD-операции из BaseDAO и добавляет
-    специализированные методы для работы с сущностью Faculty.
+    Inherits basic CRUD operations from BaseDAO and adds
+    specialized methods for working with the Faculty entity.
 
-    Примеры использования:
+    Usage examples:
         faculty_dao = FacultyDAO()
-        new_faculty = await faculty_dao.add(Faculty)
+        new_faculty = await faculty_dao.add({
+                "name": "Computer Science",
+                "description": "Faculty of Computer Science",
+                "dean_id": 1
+            })
+        found_faculty = await faculty_dao.find_one_or_none(name="Computer Science")
 
-    Атрибуты:
-        model (Faculty): SQLAlchemy модель групп, используемая для операций
+    Attributes:
+        model (Faculty): SQLAlchemy Faculty model used for operations
     """
 
     model = Faculty

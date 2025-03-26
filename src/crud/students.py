@@ -3,17 +3,22 @@ from src.models import Student
 
 
 class StudentDAO(BaseDAO):
-    """Data Access Object (DAO) для управления пользователями в базе данных.
+    """Data Access Object (DAO) for managing students in the database.
 
-    Наследует базовые CRUD-операции из BaseDAO и добавляет
-    специализированные методы для работы с сущностью Student.
+    Inherits basic CRUD operations from BaseDAO and adds
+    specialized methods for working with the Student entity.
 
-    Примеры использования:
+    Usage examples:
         student_dao = StudentDAO()
-        new_student = await student_dao.add(Student)
+        new_student = await student_dao.add({
+                "user_id": 1,
+                "group_id": 1,
+                "student_id": "2"
+            })
+        found_student = await student_dao.find_one_or_none(student_id="2024001")
 
-    Атрибуты:
-        model (Student): SQLAlchemy модель групп, используемая для операций
+    Attributes:
+        model (Student): SQLAlchemy Student model used for operations
     """
 
     model = Student

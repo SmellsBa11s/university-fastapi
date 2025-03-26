@@ -1,99 +1,123 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from src.core.dependencies import get_current_user
-from src.crud import UserDAO
 from src.models import User
-from src.models.enum import UserRoleEnum
 from src.schemas import GetAllUsersResponse, UserInfo, UpdateUserRequest
+from src.service import UserService
 
 router = APIRouter()
 
 
-@router.post("", summary="Возвращает всех активных пользователей")
+@router.post("", summary="Returns all active users")
 async def get_all(
-    db_user: UserDAO = Depends(UserDAO), user: User = Depends(get_current_user)
+    user_service: UserService = Depends(UserService),
+    user: User = Depends(get_current_user),
 ) -> GetAllUsersResponse:
-    if user.user_role != UserRoleEnum.ADMIN:
-        raise HTTPException(status_code=403, detail="Only admin can get all users")
-    users = await db_user.find_all(is_active=True)
+    """Returns a list of all active users in the system.
 
-    users_response = [
-        UserInfo(
-            id=user.id,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            username=user.username,
-            user_role=user.user_role,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
-        for user in users
-    ]
+    Args:
+        user_service (UserService): Service for working with users
+        user (User): Authorized user
 
-    return GetAllUsersResponse(users=users_response)
+    Returns:
+        GetAllUsersResponse: List of active users
+
+    Raises:
+        HTTPException: 403 if user is not an administrator
+    """
+    return await user_service.get_all_users(current_user=user)
 
 
-@router.get("/{user_id}", summary="Возвращает пользователя по id")
-async def get_by_id(user_id: int, db_user: UserDAO = Depends(UserDAO)) -> UserInfo:
-    user = await db_user.find_one(id=user_id)
-    return UserInfo(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        username=user.username,
-        user_role=user.user_role,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+@router.get("/{user_id}", summary="Returns user by id")
+async def get_by_id(
+    user_id: int, user_service: UserService = Depends(UserService)
+) -> UserInfo:
+    """Gets user information by their ID.
+
+    Args:
+        user_id (int): Unique user identifier
+        user_service (UserService): Service for working with users
+
+    Returns:
+        UserInfo: User information
+
+    Raises:
+        HTTPException: 404 if user is not found
+    """
+    return await user_service.get_user_by_id(user_id=user_id)
 
 
-@router.put("/{user_id}", summary="Обновление профиля пользователя")
+@router.put("/{user_id}", summary="Update user profile")
 async def update_user(
     user_id: int,
     updated_user: UpdateUserRequest,
-    db_user: UserDAO = Depends(UserDAO),
+    user_service: UserService = Depends(UserService),
     user: User = Depends(get_current_user),
 ) -> UserInfo:
-    if (user.id != user_id) and (user.user_role != UserRoleEnum.ADMIN):
-        raise HTTPException(status_code=403, detail="You can only update yourself.")
-    update_data = updated_user.dict(exclude_none=True)
+    """Updates user information.
 
-    if update_data:
-        user_list = await db_user.update(model_id=user_id, **update_data)
-        user = user_list[0]
-    else:
-        user = await db_user.find_one(id=user_id)
+    Args:
+        user_id (int): Unique user identifier
+        updated_user (UpdateUserRequest): Data to update
+        user_service (UserService): Service for working with users
+        user (User): Authorized user
 
-    return UserInfo(
-        id=user.id,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        username=user.username,
-        user_role=user.user_role,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
+    Returns:
+        UserInfo: Updated user information
+
+    Raises:
+        HTTPException:
+            403 if user tries to update someone else's profile
+            404 if user is not found
+    """
+    return await user_service.update_user(
+        user_id=user_id, update_data=updated_user, current_user=user
     )
 
 
-@router.delete("/deactivate/{user_id}", summary="Деактивирует пользователя по ID")
+@router.delete("/deactivate/{user_id}", summary="Deactivates user by ID")
 async def deactivate_by_id(
     user_id: int,
+    user_service: UserService = Depends(UserService),
     user: User = Depends(get_current_user),
-    db_user: UserDAO = Depends(UserDAO),
 ) -> bool:
-    if (user.id != user_id) and (user.user_role != UserRoleEnum.ADMIN):
-        raise HTTPException(status_code=403, detail="You can only delete yourself.")
-    await db_user.update(model_id=user_id, is_active=False)
-    return True
+    """Deactivates a user in the system.
+
+    Args:
+        user_id (int): Unique user identifier
+        user_service (UserService): Service for working with users
+        user (User): Authorized user
+
+    Returns:
+        bool: True if deactivation was successful
+
+    Raises:
+        HTTPException:
+            403 if user tries to deactivate someone else's profile
+            404 if user is not found
+    """
+    return await user_service.deactivate_user(user_id=user_id, current_user=user)
 
 
-@router.patch("/activate/{user_id}", summary="Активирует пользователя по ID")
+@router.patch("/activate/{user_id}", summary="Activates user by ID")
 async def activate_by_id(
     user_id: int,
+    user_service: UserService = Depends(UserService),
     user: User = Depends(get_current_user),
-    db_user: UserDAO = Depends(UserDAO),
 ) -> bool:
-    if user.user_role != UserRoleEnum.ADMIN:
-        raise HTTPException(status_code=403, detail="Only ADMIN can activate user")
-    await db_user.update(model_id=user_id, is_active=True)
-    return True
+    """Activates a user in the system.
+
+    Args:
+        user_id (int): Unique user identifier
+        user_service (UserService): Service for working with users
+        user (User): Authorized user
+
+    Returns:
+        bool: True if activation was successful
+
+    Raises:
+        HTTPException:
+            403 if user is not an administrator
+            404 if user is not found
+    """
+    return await user_service.activate_user(user_id=user_id, current_user=user)
