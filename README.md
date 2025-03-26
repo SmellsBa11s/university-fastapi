@@ -102,5 +102,5 @@ docker-compose down
 
 ## Авторы
 
-- Матвей - *SmellsBa11s* - [Ваш GitHub](https://github.com/SmellsBa11s)
+- Матвей - *SmellsBa11s* - [GitHub](https://github.com/SmellsBa11s)
 
