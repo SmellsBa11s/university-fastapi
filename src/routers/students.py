@@ -27,14 +27,7 @@ async def get_student(
 ):
     student = await student_service.get_student_info(student_id=student_id)
 
-    return StudentInfo(
-        id=student.id,
-        user_id=student.user_id,
-        student_number=student.student_number,
-        group_name=student.group_name,
-        enrollment_year=student.enrollment_year,
-        faculty_name=student.faculty_name,
-    )
+    return student
 
 
 @router.get("", summary="Возвращает список пользователей с фильтром")
